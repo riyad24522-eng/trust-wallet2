@@ -823,12 +823,8 @@
     return new Date(getServerTime()).toLocaleString('bn-BD');
   }
 
-  database.ref('notifications').limitToLast(1).on('child_added', (snapshot) => {
-      const notif = snapshot.val();
-      if (notif && typeof showPopup === 'function') {
-          showPopup(notif.title, notif.body);
-      }
-  });
+  // হোমপেজ পপআপ যেন লগইন করার পর শুধু একবারই আসে তার জন্য ফ্ল্যাগ
+  let hasShownNoticePopup = false;
 
   const fakeNames = [
     "Rahim Mia", "Karim Uddin", "Sumaiya Akter", "Tanvir Ahmed", "Rina Begum", 
@@ -852,7 +848,7 @@
     }, 4000);
   }
 
-  // Pull-to-refresh logic (স্ক্রিন উপর থেকে টান দিলে রিফ্রেশ কাজ করবে)
+  // Pull-to-refresh logic
   let touchstartY = 0;
   let touchendY = 0;
   const scrollableContent = document.getElementById('scrollableContent');
@@ -1036,7 +1032,6 @@
           currentUserData = user;
           await checkAndUpdateProfits();
           updateUI();
-          showPopup('Refreshed', 'ডাটা সফলভাবে রিফ্রেশ করা হয়েছে!');
         } else {
           showPopup('Notice', 'লগইন তথ্য পাওয়া যায়নি, আবার লগইন করুন।');
         }
@@ -1102,8 +1097,7 @@
 
     try {
       const provider = new firebase.auth.GoogleAuthProvider();
-      provider.addScope('email');
-      provider.addScope('profile');
+      provider.setCustomParameters({ prompt: 'select_account' });
 
       const result = await auth.signInWithPopup(provider);
       const firebaseUser = result.user;
@@ -1169,7 +1163,6 @@
       setLoggedKey(currentUserKey);
       enterApp();
       listenUserChanges(currentUserKey);
-      showPopup('Success', 'Google দিয়ে সফলভাবে লগইন হয়েছে!');
     } catch (err) {
       console.error('Social login error:', err);
       let msg = err.message || 'লগইন ব্যর্থ';
@@ -1292,7 +1285,6 @@
       setLoggedKey(currentUserKey);
       enterApp();
       listenUserChanges(currentUserKey);
-      showPopup('Success', 'রেজিস্ট্রেশন সফল! স্বাগতম ' + nick + '\nরেজিস্ট্রেশন বোনাস হিসেবে ২ টাকা দেওয়া হয়েছে।');
     } catch (err) {
       console.error(err);
       showPopup('Error', 'রেজিস্ট্রেশন ব্যর্থ: ' + err.message);
@@ -1325,7 +1317,6 @@
         setLoggedKey(currentUserKey);
         enterApp();
         listenUserChanges(currentUserKey);
-        showPopup('Success', 'লগইন সফল!');
       } else {
         showPopup('Error', 'Phone/Email বা Password ভুল');
       }
@@ -1343,6 +1334,7 @@
     } catch(e) {}
     currentUserKey = null;
     currentUserData = null;
+    hasShownNoticePopup = false;
     setLoggedKey(null);
     document.getElementById('app').style.display = 'none';
     document.getElementById('loginScreen').style.display = 'flex';
@@ -1356,6 +1348,17 @@
     updateUI();
     renderPackages();
     startLiveWithdrawTicker();
+
+    // হোমপেজে প্রবেশ করলেই কেবল ডাটাবেস থেকে পপআপ লোড হবে (একবার)
+    if (!hasShownNoticePopup) {
+      hasShownNoticePopup = true;
+      database.ref('notifications').limitToLast(1).once('child_added', (snapshot) => {
+        const notif = snapshot.val();
+        if (notif && typeof showPopup === 'function') {
+          showPopup(notif.title, notif.body);
+        }
+      });
+    }
   }
 
   async function checkAndUpdateProfits() {
@@ -1548,11 +1551,11 @@
       },
       {
         key: 'tg1', title: 'Telegram Channel 1', desc: '১৳ বোনাস', icon: '✈️', isDone: tg1Claimed,
-        actionBtn: `<button class="btn ${!tg1Claimed ? 'btn-blue' : 'btn-disabled'}" style="padding: 8px 14px; font-size: 13px;" ${tg1Claimed ? 'disabled' : ''} onclick="joinTelegram('tg1')">${!tg1Claimed ? 'Join' : 'Joined'}</button>`
+        actionBtn: `<button class="btn btn-blue" style="padding: 8px 14px; font-size: 13px;" onclick="joinTelegram('tg1')">${!tg1Claimed ? 'Join' : 'Joined'}</button>`
       },
       {
         key: 'tg2', title: 'Telegram Channel 2', desc: '১৳ বোনাস', icon: '✈️', isDone: tg2Claimed,
-        actionBtn: `<button class="btn ${!tg2Claimed ? 'btn-blue' : 'btn-disabled'}" style="padding: 8px 14px; font-size: 13px;" ${tg2Claimed ? 'disabled' : ''} onclick="joinTelegram('tg2')">${!tg2Claimed ? 'Join' : 'Joined'}</button>`
+        actionBtn: `<button class="btn btn-blue" style="padding: 8px 14px; font-size: 13px;" onclick="joinTelegram('tg2')">${!tg2Claimed ? 'Join' : 'Joined'}</button>`
       },
       {
         key: 'promo', title: 'Promo Code', desc: 'কোড দিয়ে ২ টাকা রিওয়ার্ড নাও', icon: '🎁', isDone: isPromoClaimed,
@@ -1715,6 +1718,15 @@
 
   async function doWithdraw() {
     let user = getActiveUser();
+    
+    const isTg1Joined = user.completedTasks && user.completedTasks['tg1'];
+    const isTg2Joined = user.completedTasks && user.completedTasks['tg2'];
+
+    if (!isTg1Joined || !isTg2Joined) {
+      showPopup('বিজ্ঞপ্তি', 'উইথড্র করার জন্য আপনাকে অবশ্যই ২টি টেলিগ্রাম চ্যানেলেই জয়েন করতে হবে!');
+      return;
+    }
+
     const amt = parseFloat(document.getElementById('wdAmount').value);
     const wdNum = document.getElementById('wdNumber').value.trim();
     
@@ -1797,24 +1809,24 @@
   async function joinTelegram(channelKey) {
     let user = getActiveUser();
     if (!user.completedTasks) user.completedTasks = {};
-    if (user.completedTasks[channelKey]) {
-      showPopup('Info', 'এই চ্যানেলটিতে আগেই জয়েন করে রিওয়ার্ড নিয়েছেন!');
-      return;
-    }
+    
     window.open(channelKey === 'tg1' ? 'https://t.me/+P0TB5j0FONc1Njhl' : 'https://t.me/+HsRU7ICa1SoxNDk1', '_blank');
-    showLoading(true);
-    try {
-      user.completedTasks[channelKey] = true;
-      user.balance = (user.balance || 0) + 1.00;
-      if (!user.history) user.history = [];
-      user.history.push({ id: 'TG_' + Date.now(), type: 'Telegram Join Reward', amount: 1.00, status: 'Completed', time: getFormattedServerTime() });
-      await saveUserToFirebase(user);
-      updateUI();
-      showClaimSuccess('চ্যানেলে জয়েন করার জন্য ১ টাকা রিওয়ার্ড দেওয়া হয়েছে!');
-    } catch (err) {
-      showPopup('Error', err.message);
-    } finally {
-      showLoading(false);
+
+    if (!user.completedTasks[channelKey]) {
+      showLoading(true);
+      try {
+        user.completedTasks[channelKey] = true;
+        user.balance = (user.balance || 0) + 1.00;
+        if (!user.history) user.history = [];
+        user.history.push({ id: 'TG_' + Date.now(), type: 'Telegram Join Reward', amount: 1.00, status: 'Completed', time: getFormattedServerTime() });
+        await saveUserToFirebase(user);
+        updateUI();
+        showClaimSuccess('চ্যানেলে জয়েন করার জন্য ১ টাকা রিওয়ার্ড দেওয়া হয়েছে!');
+      } catch (err) {
+        showPopup('Error', err.message);
+      } finally {
+        showLoading(false);
+      }
     }
   }
 
