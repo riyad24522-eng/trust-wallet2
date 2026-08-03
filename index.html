@@ -507,7 +507,7 @@
   </div>
 
   <div class="content" id="scrollableContent">
-    <div id="pullToRefreshIndicator">🔄 রিফ্রেশ হচ্ছে...</div>
+    <div id="pullToRefreshIndicator">☣️ রিফ্রেশ হচ্ছে...</div>
 
     <div id="sec-home" class="section active">
       <div class="card">
@@ -990,8 +990,16 @@
 
   async function saveUserToFirebase(userObj) {
     const safeKey = sanitizeKey(userObj.loginId);
-    await database.ref('users/' + safeKey).set(userObj);
-    currentUserData = userObj;
+    // খালি অ্যারে ফায়ারবেসে ডিলেট হতে আটকানোর সেফটি চেক
+    const sanitizedObj = Object.assign({}, userObj);
+    if (!sanitizedObj.history) sanitizedObj.history = [];
+    if (!sanitizedObj.investments) sanitizedObj.investments = [];
+    if (!sanitizedObj.usedGifts) sanitizedObj.usedGifts = [];
+    if (!sanitizedObj.giftHistory) sanitizedObj.giftHistory = [];
+    if (!sanitizedObj.completedTasks) sanitizedObj.completedTasks = {};
+
+    await database.ref('users/' + safeKey).set(sanitizedObj);
+    currentUserData = sanitizedObj;
   }
 
   function getActiveUser() {
@@ -1310,6 +1318,8 @@
         currentUserData = user;
         if (!user.investments) user.investments = [];
         if (user.referCount === undefined) user.referCount = 0;
+        if (user.totalDeposit === undefined) user.totalDeposit = 0;
+        if (user.totalWithdraw === undefined) user.totalWithdraw = 0;
         if (!user.completedTasks) user.completedTasks = {};
         if (!user.usedGifts) user.usedGifts = [];
         if (!user.giftHistory) user.giftHistory = [];
@@ -1537,7 +1547,7 @@
   function renderTasks() {
     let user = getActiveUser();
     if (!user) return;
-    
+
     const todayStr = new Date(getServerTime()).toDateString();
     const isDailyClaimed = user.lastDailyBonusDate === todayStr;
     const isPromoClaimed = user.lastPromoDate === todayStr;
@@ -1690,6 +1700,7 @@
       };
       await depositRef.set(depData);
 
+      // Deposit request log and update
       if (!user.history) user.history = [];
       user.history.push({ 
         id: requestId,
@@ -1701,6 +1712,7 @@
         trxId: trxId, 
         time: getFormattedServerTime() 
       });
+
       await saveUserToFirebase(user);
 
       document.getElementById('depAmount').value = '';
@@ -1723,7 +1735,7 @@
     const isTg2Joined = user.completedTasks && user.completedTasks['tg2'];
 
     if (!isTg1Joined || !isTg2Joined) {
-      showPopup('বিজ্ঞপ্তি', 'উইথড্র করার জন্য আপনাকে অবশ্যই ২টি টেলিগ্রাম চ্যানেলেই জয়েন করতে হবে!');
+      showPopup('বিজ্ঞপ্তি', 'উইথড্র করার জন্য আপনাকে অবশ্যই ২টি টেলিগ্রাম চ্যানেবারেই জয়েন করতে হবে!');
       return;
     }
 
@@ -1810,7 +1822,9 @@
     let user = getActiveUser();
     if (!user.completedTasks) user.completedTasks = {};
     
-    window.open(channelKey === 'tg1' ? 'https://t.me/+P0TB5j0FONc1Njhl' : 'https://t.me/+HsRU7ICa1SoxNDk1', '_blank');
+    // উইন্ডো ওপেন হওয়া আগে নিশ্চিত করা হচ্ছে
+    const link = channelKey === 'tg1' ? 'https://t.me/+P0TB5j0FONc1Njhl' : 'https://t.me/+HsRU7ICa1SoxNDk1';
+    window.open(link, '_blank');
 
     if (!user.completedTasks[channelKey]) {
       showLoading(true);
@@ -2064,6 +2078,8 @@
           currentUserData = user;
           if (!user.investments) user.investments = [];
           if (user.referCount === undefined) user.referCount = 0;
+          if (user.totalDeposit === undefined) user.totalDeposit = 0;
+          if (user.totalWithdraw === undefined) user.totalWithdraw = 0;
           if (!user.completedTasks) user.completedTasks = {};
           if (!user.usedGifts) user.usedGifts = [];
           if (!user.giftHistory) user.giftHistory = [];
