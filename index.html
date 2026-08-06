@@ -673,7 +673,8 @@
           </div>
         </div>
 
-        <div style="margin-top: 16px; margin-bottom: 6px; font-size: 13px; color: #4f46e5; font-weight: 800;">প্রতি রেফারে ৫ টাকা (রেফার্ড ইউজার টেলিগ্রাম জয়েন করলে) 🎁 বন্ধুদের সাথে শেয়ার করো</div>
+        <!-- রেফার টেক্সট আপডেট: ৫ → ১ -->
+        <div style="margin-top: 16px; margin-bottom: 6px; font-size: 13px; color: #4f46e5; font-weight: 800;">প্রতি রেফারে ১ টাকা (রেফার্ড ইউজার টেলিগ্রাম জয়েন করলে) 🎁 বন্ধুদের সাথে শেয়ার করো</div>
         <div style="display:flex; gap:10px;">
           <input type="text" id="refLink" readonly style="flex:1; padding:10px 14px; border:2px solid var(--input-border); border-radius:12px; font-size:13px; background:var(--input-bg); color:var(--text-color);">
           <button class="copy-btn" onclick="copyText('refLink')">Copy</button>
@@ -1760,15 +1761,15 @@
         actionBtn: `<button class="btn ${!isDailyClaimed ? 'btn-green' : 'btn-disabled'}" style="padding: 8px 14px; font-size: 13px;" ${isDailyClaimed ? 'disabled' : ''} onclick="claimDailyBonus()">${!isDailyClaimed ? 'Claim' : 'Claimed'}</button>`
       },
       {
-        key: 'tg1', title: 'Telegram Channel 1', desc: '১৳ বোনাস (দুই চ্যানেলই জয়েন করলে রেফারার পাবে ৫৳)', icon: '✈️', isDone: tg1Claimed,
+        key: 'tg1', title: 'Telegram Channel 1', desc: '১৳ বোনাস (দুই চ্যানেলই জয়েন করলে রেফারার পাবে ১৳)', icon: '✈️', isDone: tg1Claimed,
         actionBtn: `<button class="btn btn-blue" style="padding: 8px 14px; font-size: 13px;" onclick="joinTelegram('tg1')">${!tg1Claimed ? 'Join' : 'Joined'}</button>`
       },
       {
-        key: 'tg2', title: 'Telegram Channel 2', desc: '১৳ বোনাস (দুই চ্যানেলই জয়েন করলে রেফারার পাবে ৫৳)', icon: '✈️', isDone: tg2Claimed,
+        key: 'tg2', title: 'Telegram Channel 2', desc: '১৳ বোনাস (দুই চ্যানেলই জয়েন করলে রেফারার পাবে ১৳)', icon: '✈️', isDone: tg2Claimed,
         actionBtn: `<button class="btn btn-blue" style="padding: 8px 14px; font-size: 13px;" onclick="joinTelegram('tg2')">${!tg2Claimed ? 'Join' : 'Joined'}</button>`
       },
       {
-        key: 'promo', title: 'Promo Code', desc: 'কোড দিয়ে ২ টাকা রিওয়ার্ড নাও', icon: '🎁', isDone: isPromoClaimed,
+        key: 'promo', title: 'Promo Code', desc: 'কোড দিয়ে ১ টাকা রিওয়ার্ড নাও', icon: '🎁', isDone: isPromoClaimed,
         actionBtn: `<button class="btn ${!isPromoClaimed ? 'btn-orange' : 'btn-disabled'}" style="padding: 8px 14px; font-size: 13px;" ${isPromoClaimed ? 'disabled' : ''} onclick="showPromoPopup()">${!isPromoClaimed ? 'Enter' : 'Done'}</button>`
       }
     ];
@@ -2046,18 +2047,19 @@
     }
   }
 
+  // রেফার বোনাস ১ টাকা (পূর্বে ৫ ছিল)
   async function giveReferralBonusToReferrer(referredUser) {
     try {
       const referrerKey = sanitizeKey(referredUser.referredBy);
       const txResult = await database.ref('users/' + referrerKey).transaction((curr) => {
         if (curr) {
           curr.referCount = (curr.referCount || 0) + 1;
-          curr.balance = (curr.balance || 0) + 5.00;
+          curr.balance = (curr.balance || 0) + 1.00;  // ৫ → ১
           if (!curr.history) curr.history = [];
           curr.history.push({
             id: 'REF_' + Date.now(),
             type: `Referral Bonus (${referredUser.nick})`,
-            amount: 5.00,
+            amount: 1.00,    // ৫ → ১
             status: 'Completed',
             time: getFormattedServerTime()
           });
@@ -2077,6 +2079,7 @@
   function showPromoPopup() { document.getElementById('promoPopup').style.display = 'flex'; }
   function closePromo() { document.getElementById('promoPopup').style.display = 'none'; }
   
+  // প্রমো কোড বোনাস ১ টাকা (পূর্বে ২ ছিল)
   async function applyPromo() {
     let user = getActiveUser();
     const code = document.getElementById('promoCode').value.trim().toUpperCase();
@@ -2085,17 +2088,17 @@
       showPopup('সতর্কতা', '২৪ ঘণ্টার মধ্যে ইতিমধ্যে প্রমোকোড ব্যবহার করেছেন!');
       return;
     }
-    if (code === 'RIYADKING' || code === 'BONUS2') {
+    if (code === 'RIYADKING' || code === 'BONUS1') {  // BONUS1 added for 1 taka
       showLoading(true);
       try {
         user.lastPromoDate = todayStr;
-        user.balance = (user.balance || 0) + 2.00;
+        user.balance = (user.balance || 0) + 1.00;  // ২ → ১
         if (!user.history) user.history = [];
-        user.history.push({ id: 'PROMO_' + Date.now(), type: 'Promo Code Reward', amount: 2.00, status: 'Completed', time: getFormattedServerTime() });
+        user.history.push({ id: 'PROMO_' + Date.now(), type: 'Promo Code Reward', amount: 1.00, status: 'Completed', time: getFormattedServerTime() });
         await saveUserToFirebase(user);
         updateUI();
         closePromo();
-        showClaimSuccess('প্রমোকোড সফল! +৳ ২.০০ যোগ হয়েছে');
+        showClaimSuccess('প্রমোকোড সফল! +৳ ১.০০ যোগ হয়েছে');
       } catch (err) {
         showPopup('Error', err.message);
       } finally {
@@ -2203,6 +2206,7 @@
     }).join('');
   }
 
+  // ===== প্যাকেজ কেনার ফাংশন (আজকে কিনলে আজকে ক্লেইম) =====
   async function buyPackage(pkgId) {
     let user = getActiveUser();
     const pkg = packages.find(p => p.id === pkgId);
@@ -2224,15 +2228,17 @@
       user.balance -= pkg.price;
       if (!user.investments) user.investments = [];
       
-      // 🔥 প্যাকেজ কেনার দিন daysCount = 1 (আজকের দিন থেকে শুরু)
+      const dailyProfit = (pkg.price * (pkg.rate / 100));
+      
+      // 🔥 প্রথম দিনের প্রফিট সহ প্যাকেজ শুরু
       user.investments.push({
         id: pkg.id,
         label: pkg.label,
         price: pkg.price,
         rate: pkg.rate,
         totalDays: pkg.days,
-        daysCount: 1,  // 👈 আজকে ১ থেকে শুরু (আজকে ০ নয়)
-        accumulatedProfit: 0,
+        daysCount: 1,              // আজকে ১ দিন
+        accumulatedProfit: dailyProfit,  // আজকের প্রফিট
         lastClaimTime: getServerTime(),
         status: 'active'
       });
@@ -2248,7 +2254,7 @@
 
       await saveUserToFirebase(user);
       updateUI();
-      showPopup('Success', `${pkg.label} প্যাকেজটি সফলভাবে কেনা হয়েছে!\nআজ থেকে ${pkg.days} দিন কাউন্ট শুরু হয়েছে।`);
+      showPopup('Success', `${pkg.label} প্যাকেজটি সফলভাবে কেনা হয়েছে!\nআজকের প্রফিট ৳ ${dailyProfit.toFixed(2)} যোগ হয়েছে, আপনি এখন ক্লেইম করতে পারবেন।`);
     } catch (err) {
       showPopup('Error', err.message);
     } finally {
