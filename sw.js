@@ -1,5 +1,8 @@
 const CACHE_NAME = "taste-v1";
-const urlsToCache = ["./", "./index.html"];
+const urlsToCache = [
+  "/trust-wallet2/",
+  "/trust-wallet2/index.html"
+];
 
 self.addEventListener("install", event => {
   event.waitUntil(
