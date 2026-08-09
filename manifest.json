@@ -1,21 +1,23 @@
 {
   "name": "Taste Wallet",
   "short_name": "Taste",
-  "start_url": "./",
-  "scope": "./",
+  "start_url": "/trust-wallet2/",
+  "scope": "/trust-wallet2/",
   "display": "standalone",
-  "background_color": "#4f46e5",
-  "theme_color": "#4f46e5",
+  "background_color": "#f4f4f4",
+  "theme_color": "#f4f4f4",
   "icons": [
     {
-      "src": "./icon-192.png",
+      "src": "/trust-wallet2/icon-192.png",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     },
     {
-      "src": "./icon-512.png",
+      "src": "/trust-wallet2/icon-512.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     }
   ]
 }
