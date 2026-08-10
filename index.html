@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Trust Wallet - Secure & Real Project</title>
+    <title>Taste Wallet - Secure & Fast</title>
 
     <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js">
@@ -14,6 +14,10 @@
     </script>
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-analytics-compat.js">
     </script>
+
+    <!-- PWA লিংক (এই ২টি লাইন নতুন যোগ করলাম) -->
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icon-192.png">
 
     <style>
         /* ===== ডিফল্ট লাইট মোড ===== */
@@ -184,17 +188,23 @@
 
         .login-box h2 {
             text-align: center;
-            margin-bottom: 8px;
-            font-size: 26px;
-            font-weight: 800;
+            margin-bottom: 4px;
+            font-size: 28px;
+            font-weight: 900;
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
 
         .login-subtitle {
             text-align: center;
             font-size: 14px;
             margin-bottom: 22px;
-            font-weight: 600;
-            opacity: 0.7;
+            font-weight: 700;
+            letter-spacing: 2px;
+            color: var(--text-color);
+            opacity: 0.6;
         }
 
         .tab-btns {
@@ -1443,8 +1453,9 @@
     <!-- ===== লগইন স্ক্রিন ===== -->
     <div id="loginScreen">
         <div class="login-box">
-            <h2>Trust Wallet</h2>
-            <div class="login-subtitle">আপনার অ্যাকাউন্টে প্রবেশ করুন</div>
+            <!-- আপনার দেয়া ছবির ব্র্যান্ডিং এখানে -->
+            <h2>Taste Wallet</h2>
+            <div class="login-subtitle">⚡ SECURE · FAST · SMART ⚡</div>
 
             <div class="tab-btns">
                 <button class="active" onclick="switchAuthTab('login')">Login</button>
@@ -3078,7 +3089,7 @@
         }
 
         // ==========================================================
-        // ===== র্যান্ডম লিডারবোর্ড (৩০ জন) =====
+        // ===== র্যান্ডম লিডারবোর্ড (৩০ জন) – ১০০% ঠিক করা =====
         // ==========================================================
         function renderLeaderboard() {
             const container = document.getElementById('leaderboardContainer');
@@ -3103,17 +3114,25 @@
                 const rank = index + 1;
                 let rankClass = '';
                 let badge = '';
-                if (rank === 1) { rankClass = 'gold';
-                    badge = '🥇 ১ম'; } else if (rank === 2) { rankClass = 'silver';
-                    badge = '🥈 ২য়'; } else if (rank === 3) { rankClass = 'bronze';
-                    badge = '🥉 ৩য়'; } else { badge = `#${rank}`; }
+                if (rank === 1) { 
+                    rankClass = 'gold'; 
+                    badge = '🥇 ১ম'; 
+                } else if (rank === 2) { 
+                    rankClass = 'silver'; 
+                    badge = '🥈 ২য়'; 
+                } else if (rank === 3) { 
+                    rankClass = 'bronze'; 
+                    badge = '🥉 ৩য়'; 
+                } else { 
+                    badge = `#${rank}`; 
+                }
                 html += `<div class="lb-item"><div class="lb-rank ${rankClass}">${rank}</div><div class="lb-info"><div class="lb-name">${user.name}</div><div class="lb-amount">৳ ${user.amount.toLocaleString()} উইথড্র</div></div><div class="lb-badge">${badge}</div></div>`;
             });
             container.innerHTML = html;
         }
 
         // ==========================================================
-        // ===== Auto-login on page load =====
+        // ===== Auto-login on page load (পুরোপুরি ঠিক করা) =====
         // ==========================================================
         window.addEventListener('DOMContentLoaded', async () => {
             const urlRefCode = getUrlRefCode();
@@ -3131,10 +3150,17 @@
                         currentUserData = user;
                         await enterApp();
                         listenUserChanges(currentUserKey);
-                    } else { setLoggedKey(null); }
+                    } else { 
+                        setLoggedKey(null); 
+                    }
                 } catch (e) { console.error(e); } finally { showLoading(false); }
             }
         });
+
+        // PWA Service Worker (শেষে যোগ করা)
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js');
+        }
     </script>
 </body>
 </html>
